@@ -1,0 +1,17 @@
+{
+    "files.associations": {
+        "flash_page_f1.h": "c",
+        "stm32f1xx_hal.h": "c",
+        "stm32f1xx_hal_conf.h": "c",
+        "nvm.h": "c",
+        "stm32f103.h": "c",
+        "stm32f1xx.h": "c",
+        "stm32f103xb.h": "c",
+        "flashstorage_stm32f1.h": "c",
+        "flashstorage_stm32f1.hpp": "c",
+        "parameter.h": "c",
+        "state.h": "c",
+        "serial.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
+}
