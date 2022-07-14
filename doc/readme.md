@@ -1,13 +1,4 @@
-Commands
-
-Over Pins:
-Input Step 1 
-Input Dir 0,1
-Input 
-
-Over Serial
-
-Implemented serial commands are:
+Commands Serial (baudrate 115200)
 
  s  -  step
  d  -  dir
@@ -17,11 +8,13 @@ Implemented serial commands are:
  a  -  aknowledge incoming char - driver ready
  e  -  enable fix speed in Hz
  q  -  parameter query
- p  -  print position in int32_t
+ p  -  print position (encoder)
+ pp -  print setpoint
+ pe -  print raw encoder (Debuggin)
  
 
- x  -  enable pid timer - set Closed loop
- v  -  disable pid timer - set Open Llop
+ x  -  set Closed loop
+ v  -  set Open Llop
 
 
  y  - y<vref> set fixed vref - for open loop
@@ -33,11 +26,11 @@ Implemented serial commands are:
  ~  -  reset alarm
 
  
- k  -  Diagnsotics - todo
+ k  -  Diagnsotics - todo 
  ?  -  report Status uint8
  ??  - report Status string
  !  -  report Alarm uint8
- !  -  report Alarm string
+ !! -  report Alarm string
  g  -  gp<proportianl gain> gd<differential gain> gi<integral gain> ge<error tolerance> gc<cut-off frequenzy> -- for PID Kp,Kd,Ki, error tol, cut off frequenzy (float)
  h  -  store gains to flash
  j  -  read gains from flash
@@ -69,16 +62,3 @@ STATE_RESERVED_1         BIT6 // bitmask 01000000
 STATE_RESERVED_2         BIT7 // bitmask 10000000
 
 
-
-
-reaching
-perl -e 'for my $a (0..127) {
-     printf "page %d 0x%x \n",$a, $a*1024 + 0x8000000;
-           
- }'
- 
-  printf "%+6.0f,", sin($a * 3.1415 / 180 / 10.0)*1024;
-           print "\n" if $a % 10 == 9;
-           
-           
-           

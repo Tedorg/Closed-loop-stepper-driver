@@ -273,3 +273,18 @@ ONEPULSE MODE
 	// Timer 3 enable counter d
 	// CLEAR_BIT(TIM3->CR1, TIM_CR1_CEN + TIM_CR1_ARPE);
 	/* ENABLE PA6 as output for STEP TO DRV */
+
+
+
+
+reaching
+perl -e 'for my $a (0..127) {
+     printf "page %d 0x%x \n",$a, $a*1024 + 0x8000000;
+           
+ }'
+ 
+  printf "%+6.0f,", sin($a * 3.1415 / 180 / 10.0)*1024;
+           print "\n" if $a % 10 == 9;
+           
+           
+           
