@@ -1,2 +1,0 @@
-RESET and SLEEP pins must be high  to enable the driver 
-driver pulls the SLEEP pin low through an internal 1MΩ pull-down resistor, and it pulls the RESET and ENBL pins low through internal 100kΩ p
