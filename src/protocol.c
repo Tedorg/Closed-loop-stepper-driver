@@ -252,6 +252,7 @@ uint16_t pid_2()
     return pwm;
 }
 
+
 /// Reset the activity counter to prevent the motor from turning off.
 void resetActivityCounter() { activityCount = 0; }
 /// Set the number of seconds after which the motor is turned off, zero to
