@@ -4,7 +4,7 @@ heavily inspired by mechaduino
 
 Commands Serial (baudrate 115200)
 
- s  -  step
+ s  -  step \n
  d  -  dir
 
 
