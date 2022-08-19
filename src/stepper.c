@@ -10,12 +10,19 @@
 
 void init_stepper()
 {
-	init_vref();
-	sleep_stepper(false);
-	set_vref_pwm(VREF_MIN);
+	// sleep_stepper(true);
+	// enable_stepper(false);
 	set_microstep(MICRO_STEPS);
-	enable_stepper(true);
+	delay_us(1909);
+	init_vref();
+	delay_us(1909);
+
+	set_vref_pwm(VREF_MIN);
+	delay_us(1909);
+
 	set_dir(dir);
+	sleep_stepper(false);
+	enable_stepper(true);
 	set_state(STATE_INIT_STEPPER);
 }
 
@@ -72,12 +79,12 @@ void set_microstep(byte mode)
 {
 	// sleep pin High to enable
 
-	// 000  Full
-	// 100  half
-	// 010  1/4
-	// 110  1/8
-	// 001  1/16
-	// 101  1/32
+	// 000  Full 000
+	// 100  half 001
+	// 010  1/4 010
+	// 110  1/8 011
+	// 001  1/16 100
+	// 101  1/32 101
 	switch (mode)
 	{
 	case 1:
@@ -85,7 +92,7 @@ void set_microstep(byte mode)
 		break;
 
 	case 2:
-		set_microstep_pins(0x4); // half 100
+		set_microstep_pins(0x1); // half 100
 		break;
 
 	case 4:
@@ -93,11 +100,11 @@ void set_microstep(byte mode)
 		break;
 
 	case 8:
-		set_microstep_pins(0x6); // 1/8  110
+		set_microstep_pins(0x3); // 1/8  110
 		break;
 
 	case 16:
-		set_microstep_pins(0x1); // 1/16  001
+		set_microstep_pins(0x4); // 1/16  001
 		break;
 
 	case 32:
@@ -114,6 +121,10 @@ void set_microstep_pins(byte code)
 	GPIOB->BSRR = GPIO_BSRR_BR0;  // Rsegtet PB0 bit
 	GPIOB->BSRR = GPIO_BSRR_BR1;  // Rsegtet PB1 bit
 	GPIOB->BSRR = GPIO_BSRR_BR10; // Rsegtet PB11 bit
+
+	// GPIOB->BSRR = GPIO_BSRR_BR10; // Rsegtet PB11 bit
+	// GPIOB->BSRR = GPIO_BSRR_BR1;  // Rsegtet PB1 bit
+	// GPIOB->BSRR = GPIO_BSRR_BR0;  // Rsegtet PB0 bit
 	if (code & (1 << 0))
 		GPIOB->BSRR = GPIO_BSRR_BS0; // set PB0 bit
 	if (code & (1 << 1))
@@ -123,12 +134,21 @@ void set_microstep_pins(byte code)
 }
 void init_vref()
 {
-	set_vref_pwm(100);
-	set_vref_pwm(0);
-	set_vref_pwm(100);
-	set_vref_pwm(0);
-	set_vref_pwm(100);
-	set_vref_pwm(0);
+
+	GPIOA->BSRR = GPIO_BSRR_BR15; // CS Pin is low
+
+	
+
+	GPIOA->BSRR = GPIO_BSRR_BR10; // set U/D higf
+
+	for (uint8_t i = 0; i < 100; i++)
+	{
+		GPIOA->BSRR = GPIO_BSRR_BS11; // PA11 Hich to low
+		asm_delay(200);
+		GPIOA->BSRR = GPIO_BSRR_BR11; // PA11 Hich to low
+		asm_delay(200);
+	}
+
 	current_vref_step = 0;
 }
 void store_vref()
@@ -153,7 +173,6 @@ void store_vref()
 	GPIOB->BSRR = GPIO_BSRR_BS15; // PC Pin is HIGH
 	asm_delay(1000);
 	GPIOB->BSRR = GPIO_BSRR_BR15; // PC Pin is HIGH
-
 }
 
 void set_vref_threshold(uint8_t target_vref_min)
@@ -194,21 +213,20 @@ void set_vref_pwm(uint8_t target_vref_step)
 
 void one_step()
 {
-	
+
 	GPIOB->BSRR = GPIO_BSRR_BS8; // Set PA6 bit
 	asm_delay(45);
 	GPIOB->BSRR = GPIO_BSRR_BR8; // Rsegtet PA6 bit
-	// 	// Timer 3 clock prescaler, the APB2 clock is divided by this value +1.
-	// 	TIM3->PSC =11; // divide clock by 1
+								 // 	// Timer 3 clock prescaler, the APB2 clock is divided by this value +1.
+								 // 	TIM3->PSC =11; // divide clock by 1
 
 	// 	// Timer 3 enable counter and auto-preload
 	// 	SET_BIT(TIM3->CR1, TIM_CR1_CEN + TIM_CR1_ARPE);
 	// 	TIM3->CCR1 = TIM3->ARR / 2;
 	// set_step_pwm(100);
-	//User only wants one pulse (Single mode), so write '1 in the OPM bit in the TIMx_CR1
-	//TIM3->CR1 |= TIM_CR1_OPM;
-	//TIM3->CR1 &= ~TIM_CR1_OPM;
-
+	// User only wants one pulse (Single mode), so write '1 in the OPM bit in the TIMx_CR1
+	// TIM3->CR1 |= TIM_CR1_OPM;
+	// TIM3->CR1 &= ~TIM_CR1_OPM;
 }
 void disable_step_pwm(void)
 {
@@ -222,8 +240,10 @@ void init_step_pwm()
 	/* TIM3_CH1:PA6, TIM3_CH2: PA7, TIM3_CH3: PB0, TIM3_CH4: PB1 */
 	// PA6 = Timer 3 channel 1 alternate function output
 	MODIFY_REG(GPIOA->CRL, GPIO_CRL_CNF6 + GPIO_CRL_MODE6, GPIO_CRL_CNF6_1 + GPIO_CRL_MODE6_0);
-   
-SET_BIT(GPIOA->CRL , GPIO_CRL_CNF6_1 + GPIO_CRL_MODE6_0);
+
+	SET_BIT(GPIOA->CRL, GPIO_CRL_CNF6_1 + GPIO_CRL_MODE6_0);
+	
+	//CLEAR_BIT(GPIOA->CRL, GPIO_CRL_CNF6_1 + GPIO_CRL_MODE6_0);
 
 	// Enable timer 3
 	SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM3EN);
@@ -239,12 +259,12 @@ SET_BIT(GPIOA->CRL , GPIO_CRL_CNF6_1 + GPIO_CRL_MODE6_0);
 void set_step_pwm(uint32_t frequenzy)
 {
 
-	
-
 	if (frequenzy == 0)
 	{
 		// CLEAR_BIT(TIM3->CR1, TIM_CR1_CEN + TIM_CR1_ARPE);
+		GPIOA->BSRR = GPIO_BRR_BR6;
 		CLEAR_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM3EN);
+		return;
 	}
 
 	if (frequenzy < STEP_PWM_MIN_HZ || frequenzy > STEP_PWM_MAX_HZ)
@@ -262,8 +282,7 @@ void set_step_pwm(uint32_t frequenzy)
 
 		// Timer 3 enable counter and auto-preload
 		SET_BIT(TIM3->CR1, TIM_CR1_CEN + TIM_CR1_ARPE);
-		TIM3->CCR1 = TIM3->ARR / 2;
-		
+		TIM3->CCR1 = TIM3->ARR / 4;
 	}
 }
 
@@ -271,20 +290,20 @@ void enable_one_step()
 {
 	if (exec_state & STATE_CLOSED_LOOP_MODE)
 	{
-	disable_step_pwm();
-	clear_state(STATE_CLOSED_LOOP_MODE);
+		disable_step_pwm();
+		clear_state(STATE_CLOSED_LOOP_MODE);
 	}
 
-	 if (!(exec_state & STATE_OPEN_LOOP_MODE)){
+	if (!(exec_state & STATE_OPEN_LOOP_MODE))
+	{
 
-set_state(STATE_OPEN_LOOP_MODE);
-  setup_timer(450);
-       init_pid();
-	    TIM2->CR1 = TIM_CR1_CEN; /* enable  */
-
-	 }
+		set_state(STATE_OPEN_LOOP_MODE);
+		setup_timer(450);
+		init_pid();
+		TIM2->CR1 = TIM_CR1_CEN; /* enable  */
+	}
 	// {
-		
+
 	// 	CLEAR_BIT(TIM3->CCMR1, TIM_CCMR1_OC1M_2 + TIM_CCMR1_OC1M_1 + TIM_CCMR1_OC1PE);
 	// // Timer 3 enable compare output
 	// CLEAR_BIT(TIM3->CCER, TIM_CCER_CC1E);
@@ -294,27 +313,24 @@ set_state(STATE_OPEN_LOOP_MODE);
 
 	// 	  GPIOA->CRL |= GPIO_CRL_MODE6_1 | GPIO_CRL_CNF6_1;
 	// 	 GPIOA->CRL &= ~(GPIO_CRL_CNF6_0 | GPIO_CRL_MODE6_1);
-			
-	
-
 }
 
 void init_hardware_decoder_1(void)
 {
-	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN | RCC_APB2ENR_IOPBEN;
-	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN; // AFIO might not even be needed?
+	// 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN | RCC_APB2ENR_IOPBEN;
+	// 	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN; // AFIO might not even be needed?
 
-	// GPIO must be input floating which is default so no code to write for that
+	// 	// GPIO must be input floating which is default so no code to write for that
 
-	// value to count up to : 16 bit so max is 0xFFFF = 65535
-	TIM4->ARR = 0xFFFF;
+	// 	// value to count up to : 16 bit so max is 0xFFFF = 65535
+	// 	TIM4->ARR = 0xFFFF;
 
-	// per datasheet instructions
-	TIM4->CCMR1 |= (TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC2S_0); // step 1 and 2
-	TIM4->CCER &= ~(TIM_CCER_CC1P | TIM_CCER_CC2P);		  // step 3 and 4
-	TIM4->SMCR |= TIM_SMCR_SMS_0 | TIM_SMCR_SMS_1;		  // step 5
-	TIM4->CNT = 0;										  // reset  counter
-	TIM4->CR1 |= TIM_CR1_CEN;							  // step 6
+	// 	// per datasheet instructions
+	// 	TIM4->CCMR1 |= (TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC2S_0); // step 1 and 2
+	// 	TIM4->CCER &= ~(TIM_CCER_CC1P | TIM_CCER_CC2P);		  // step 3 and 4
+	// 	TIM4->SMCR |= TIM_SMCR_SMS_0 | TIM_SMCR_SMS_1;		  // step 5
+	// 	TIM4->CNT = 0;										  // reset  counter
+	// 	TIM4->CR1 |= TIM_CR1_CEN;							  // step 6
 }
 
 void init_hardware_decoder_2(void)

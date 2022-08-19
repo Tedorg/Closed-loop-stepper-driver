@@ -60,6 +60,7 @@ extern volatile float e_3;
 extern volatile long u_d;  //neede to reduce pwm frequenzy  if motor stucked
 
 extern volatile uint8_t _busy ;
+extern volatile vref_value;
 
 
 extern volatile long wrap_count;

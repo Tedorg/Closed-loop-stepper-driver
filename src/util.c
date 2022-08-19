@@ -78,6 +78,7 @@ void init_io()
     /* Sleep to Driver PA5*/
     GPIOA->CRL |= GPIO_CRL_MODE5_1 | GPIO_CRL_CNF5_1;
     GPIOA->CRL &= ~(GPIO_CRL_CNF5_0 | GPIO_CRL_MODE5_1);
+    GPIOA->BSRR = GPIO_BSRR_BS5; // reset PB11 bit
 
     /* MS1 MS2 MS3*/
 
@@ -94,6 +95,7 @@ void init_io()
 
     GPIOB->CRH |= GPIO_CRH_MODE11_1 | GPIO_CRH_CNF11_1; // PB11
     GPIOB->CRH &= ~(GPIO_CRH_CNF11_0 | GPIO_CRH_MODE11_1);
+    GPIOB->BSRR = GPIO_BSRR_BS11; // reset PB11 bit
 
     /* Enable DS1804*/
     GPIOA->CRH |= GPIO_CRH_MODE10_1 | GPIO_CRH_CNF10_1; // Up and Down
@@ -448,17 +450,18 @@ void setup_timer(uint16_t hz)
     TIM2->CCR2 = TIM2->ARR / 4;
 
     /*************>>>>>>> Position Fault timer <<<<<<<<************/
-    RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
+    // RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
 
-    // TIM4->SR &= ~TIM_SR_UIF;
-    TIM4->ARR = 48000;
-    TIM4->PSC = 3000;
-    TIM4->CNT = 0;
-    TIM4->CR1 |= TIM_CR1_OPM;
-    TIM4->CR1 |= TIM_CR1_URS;
+    // // TIM4->SR &= ~TIM_SR_UIF;
+    // TIM4->ARR = 48000;
+    // TIM4->PSC = 3000;
+    // TIM4->CNT = 0;
+    // TIM4->CR1 |= TIM_CR1_OPM;
+    // TIM4->CR1 |= TIM_CR1_URS;
 
-    TIM4->DIER |= TIM_DIER_UIE;
+    // TIM4->DIER |= TIM_DIER_UIE;
     // NVIC_EnableIRQ(TIM4_IRQn); // Enable IRQ
+    // enable_pid_timer();
 }
 
 void TIM2_IRQHandler(void)
@@ -470,7 +473,7 @@ void TIM2_IRQHandler(void)
 
 void TIM4_IRQHandler(void)
 {
-    TIM4->SR &= ~TIM_SR_UIF;
+    //  TIM4->SR &= ~TIM_SR_UIF;
     // printf("%s\n", "control "); // Clean UIF Flag
 }
 
@@ -506,8 +509,8 @@ void parse_message(char *input, int length)
         printf("%c \n", 'a');
         break;
     case 'p': // print
-     
-       if (input[1] == 'e')
+
+        if (input[1] == 'e')
         {
             print_enc_position();
         }
@@ -515,8 +518,9 @@ void parse_message(char *input, int length)
         {
             print_setpoint();
         }
-        else {
-           print_position();
+        else
+        {
+            print_position();
         }
 
         break;
@@ -613,11 +617,18 @@ void parse_message(char *input, int length)
         break;
 
     case 'u':; // anticogging
-        uint16_t vref = atoi(&input[1]);
-        if (exec_state & STATE_OPEN_LOOP_MODE)
-            v_ref_open_loop = vref;
+        if (input[1] == 'u')
+        {
+            print_real_vref_value();
+        }
+        else
+        {
+            uint16_t vref = atoi(&input[1]);
+            if (exec_state & STATE_OPEN_LOOP_MODE)
+                v_ref_open_loop = vref;
+            set_vref_threshold(vref);
+        }
 
-        set_vref_threshold(vref);
 #ifdef DEBUG
         printf("VREF :%d\n", vref);
 #endif
@@ -634,6 +645,8 @@ void parse_message(char *input, int length)
 
     case 'h':
         store_data_to_flash();
+
+        store_vref();
         printf("\nsaved\n");
 
         break;
@@ -660,7 +673,9 @@ void serial_check()
 
     if (rxAvailable())
     {
+
         uint16_t length = egets(serialBuffer, bufferLength);
+
         parse_message(serialBuffer, length);
     }
 }
@@ -677,6 +692,10 @@ void print_setpoint()
 void print_enc_position()
 {
     printf("[%d]\n", TIM1->CNT);
+}
+void print_real_vref_value()
+{
+    printf("[%d]\n", vref_value);
 }
 
 void diagnostic()

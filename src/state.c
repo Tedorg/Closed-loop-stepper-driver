@@ -33,6 +33,7 @@ volatile float u_3 = 0.0;
 volatile float e_3 = 0.0;
 volatile long u_d = 10000;  //neede to reduce pwm frequenzy  if motor stucked
 volatile uint8_t _busy = 0;
+volatile vref_value = 0; // analog read of digital poti vref 
 
 volatile long wrap_count = 0; // keeps track of how many revolutions the motor has gone though (so you can command angles outside of 0-360)
 float wrap_quotient = 1.0f/(float)ENCODER_COUNTS_PER_REVOLUTION; // for fast division position calculation
@@ -56,6 +57,8 @@ bool print_yw = false; // for step response, under development...
 
 void state_machine(void)
 {
+  //read analog imput from the digital potentiometer
+   vref_value = read_analog(7);
   if (exec_alarm & EXEC_STATUS_REPORT)
   {
     disable_pid_timer();

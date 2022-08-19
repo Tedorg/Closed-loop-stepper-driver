@@ -26,9 +26,9 @@
 #define HALF_REVOLUTION ((MICRO_STEPS * STEPS_PER_REVOLUTION)/2)
 
 // PWM for VREF
-#define VREF_MIN 23
-#define VREF_MAX 50 //
-#define VREF_FIXED 35 //
+#define VREF_MIN 5
+#define VREF_MAX 38 //
+#define VREF_FIXED 15 //
 
 #define STEP_PWM_MIN_HZ 2000
 #define STEP_PWM_MAX_HZ 30000

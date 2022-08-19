@@ -26,6 +26,8 @@ int main(void)
   SystemInit();
   init_clock();
   init_io();
+   init_vref();
+  
   init_analog();
 
   init_uart();
@@ -52,7 +54,7 @@ int main(void)
   init_hardware_decoder_2();
 
   read_data_from_flash();
-set_vref_threshold(v_ref_min);  // setup_timer(Fs);
+  set_vref_threshold(v_ref_min); // setup_timer(Fs);
   //  size_t n = sizeof(Rx_Data)/sizeof(Rx_Data[0]);
   //  int i = 0;
   //  printf("len : %d \n", n);
@@ -67,35 +69,40 @@ set_vref_threshold(v_ref_min);  // setup_timer(Fs);
   // calibrate();
   // size_t n = sizeof(frequencies);
   // printf("sizeof frequenciesp %d \n", PAGE_CALC(n));
- // printf("FLASH: PAGE 82 0x%x \n", PAGE(82));
-// printf("half: %d \n",  HALF_REVOLUTION );
+  // printf("FLASH: PAGE 82 0x%x \n", PAGE(82));
+  // printf("half: %d \n",  HALF_REVOLUTION );
   set_state(STATE_IDLE);
-  //set_state(STATE_OPEN_LOOP_MODE);
+  // set_state(STATE_OPEN_LOOP_MODE);
+
   static uint8_t toggle = 0;
   for (;;)
   {
-    
+
     time = usTicks;
     if (time - previous_time > 6000)
     {
+
       toggle = !toggle;
       set_led_1(toggle);
       // parameterQuery();
-      if (exec_state & STATE_CLOSED_LOOP_MODE)
-      {
-        uint8_t _u = (uint8_t)fabs(ITerm) + v_ref_min ;
-        uint8_t _vref = constrain(_u, v_ref_min, v_ref_max);
-        set_vref_pwm(_vref);
-      }
-      if (exec_state & STATE_OPEN_LOOP_MODE){
-        if(exec_state & STATE_INIT_STEPPER)set_vref_pwm(v_ref_open_loop);
-      }
+    
+        if (exec_state & STATE_CLOSED_LOOP_MODE)
+        {
+          uint8_t _u = (uint8_t)fabs(ITerm) + v_ref_min;
+          uint8_t _vref = constrain(_u, v_ref_min, v_ref_max);
+          set_vref_pwm(_vref);
+        }
+        if (exec_state & STATE_OPEN_LOOP_MODE)
+        {
+          set_vref_pwm(v_ref_open_loop);
+        }
+      
       state_machine();
-      #ifdef DIAGNOSE
-    uint32_t idx = TIM1->CNT;
-    if (idx != test_position)
-      printf("%ld  %ld \n", idx,yw);
-    test_position = idx;
+#ifdef DIAGNOSE
+      uint32_t idx = TIM1->CNT;
+      if (idx != test_position)
+        printf("%ld  %ld \n", idx, yw);
+      test_position = idx;
 #endif
       previous_time = time;
       // if(exec_state & STATE_CLOSED_LOOP_MODE)printf("%d %d\n", r, yw);
@@ -104,7 +111,6 @@ set_vref_threshold(v_ref_min);  // setup_timer(Fs);
     serial_check();
     // if (exec_state & STATE_OPEN_LOOP_MODE)
     //   position();
-
 
     //   asm_delay(10000);
     // GPIOC->ODR ^= (1 << LED_BUILD_IN); // toggle diodes

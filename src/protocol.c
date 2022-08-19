@@ -19,32 +19,33 @@ void enable_pid_timer()
 
     if (exec_state & STATE_IDLE)
         clear_state(STATE_IDLE);
-    if (exec_state & STATE_OPEN_LOOP_MODE)clear_state(STATE_OPEN_LOOP_MODE);
+    if (exec_state & STATE_OPEN_LOOP_MODE)
+        clear_state(STATE_OPEN_LOOP_MODE);
 
     if (!(exec_state & STATE_CLOSED_LOOP_MODE))
     {
-          set_state(STATE_CLOSED_LOOP_MODE);
+        set_state(STATE_CLOSED_LOOP_MODE);
         // position();
-      init_step_pwm();
-      // set_setpoint(yw);
+        init_step_pwm();
+        // set_setpoint(yw);
         setup_timer(450);
-       init_pid();
-        
+        init_pid();
+
         TIM2->CR1 = TIM_CR1_CEN; /* enable  */
-     
-       // clear_state(STATE_OPEN_LOOP_MODE);
+
+        // clear_state(STATE_OPEN_LOOP_MODE);
     }
 }
 
 void disable_pid_timer()
 {
-   
-       // disable_step_pwm();
-        //set_step_pwm(0);
-       TIM2->CR1 &= ~TIM_CR1_CEN; /* disable */
-      // disable_step_pwm();
-       enable_one_step();
-    
+
+    // disable_step_pwm();
+    // set_step_pwm(0);
+    TIM2->CR1 &= ~TIM_CR1_CEN; /* disable */
+                               // disable_step_pwm();
+    enable_one_step();
+
     if (exec_state & ~STATE_IDLE)
         set_state(STATE_IDLE);
 }
@@ -63,7 +64,7 @@ void set_setpoint(int t)
 {
     setpoint = t;
     resetActivityCounter();
-   resetIntegral();
+    resetIntegral();
     u_1 = 0;
     u_d = 0;
     // if (exec_state & STATE_OPEN_LOOP_MODE){
@@ -74,11 +75,8 @@ void set_setpoint(int t)
     // }
 }
 
-
 void _pid()
 {
-    
-
 
     if (position())
         activityCount++;
@@ -88,83 +86,77 @@ void _pid()
     }
     else
     {
-        if (exec_state & STATE_CLOSED_LOOP_MODE){
-
-        _busy = 1;
-        e = (double)(setpoint - yw);
-
-        if (!(exec_state & STATE_REACHED_TARGET))
+        if (exec_state & STATE_CLOSED_LOOP_MODE)
         {
-            ITerm += (e); // Integral wind up limit
-            if (ITerm > 200)
-                ITerm = 200;
-            else if (ITerm < -200)
-                ITerm = -200;
-        }
 
-        DTerm = (double)(yw - yw_1);
+            _busy = 1;
+            e = (double)(setpoint - yw);
 
-        u = (pKp * e) + (pKi * ITerm) + (pKd * DTerm);
-        // uint8_t _vref = constrain(abs((uint8_t)e),VREF_MIN,VREF_MAX);
-        // set_vref_pwm(_vref);
-        //  if(u != u_1) printf("e: %d  u: %d \n",(int)e,(int)u);
-
-        if (u < 0)
-        {
-            set_dir(false);
-            u = u*-1;
-            
-        }
-        else
-        {
-            set_dir(true);
-        }
-
-        if (fabs(e) < e_t)
-        {
-            if (ITerm < -0.2)
-                ITerm += 0.1f;
-            if (ITerm > 0.2)
-                ITerm -= 0.1f;
-            set_led_2(true);
-            U = 0;
-            set_step_pwm(U);
-
-            if (exec_state & ~STATE_REACHED_TARGET)
-                set_state(STATE_REACHED_TARGET);
-        }
-        else
-        {
-            if (exec_state & STATE_REACHED_TARGET)
-                clear_state(STATE_REACHED_TARGET);
-            if (abs(yw_1 - yw) > 10)
+            if (!(exec_state & STATE_REACHED_TARGET))
             {
+                ITerm += (e); // Integral wind up limit
+                if (ITerm > 200)
+                    ITerm = 200;
+                else if (ITerm < -200)
+                    ITerm = -200;
+            }
+            DTerm = (double)(yw - yw_1);
 
-                u_d = constrain(u_d - 500, 0, (STEP_PWM_MAX_HZ / 2));
+            u = (pKp * e) + (pKi * ITerm) + (pKd * DTerm);
+            // uint8_t _vref = constrain(abs((uint8_t)e),VREF_MIN,VREF_MAX);
+            // set_vref_pwm(_vref);
+            //  if(u != u_1) printf("e: %d  u: %d \n",(int)e,(int)u);
+
+            if (u < 0)
+            {
+                set_dir(false);
+                u = u * -1;
             }
             else
             {
-                u_d = constrain(u_d + 500, 0, (STEP_PWM_MAX_HZ / 2)); // this means stepper is not moving, so reduce pwm frequenzy
+                set_dir(true);
             }
-            U = constrain(u, STEP_PWM_MIN_HZ, STEP_PWM_MAX_HZ);
-            U = constrain((U-u_d), STEP_PWM_MIN_HZ, STEP_PWM_MAX_HZ);
-            set_step_pwm(U);
-            set_led_2(false);
+
+            if (fabs(e) < e_t)
+            {
+                if (ITerm < -0.2)
+                    ITerm += 0.1f;
+                if (ITerm > 0.2)
+                    ITerm -= 0.1f;
+                set_led_2(true);
+                U = 0;
+                set_step_pwm(U);
+
+                if (exec_state & ~STATE_REACHED_TARGET)
+                    set_state(STATE_REACHED_TARGET);
+            }
+            else
+            {
+                if (exec_state & STATE_REACHED_TARGET)
+                    clear_state(STATE_REACHED_TARGET);
+                if (abs(yw_1 - yw) > 10)
+                {
+
+                    u_d = constrain(u_d - 500, 0, (STEP_PWM_MAX_HZ / 2));
+                }
+                else
+                {
+                    u_d = constrain(u_d + 500, 0, (STEP_PWM_MAX_HZ / 2)); // this means stepper is not moving, so reduce pwm frequenzy
+                }
+                U = constrain(u, STEP_PWM_MIN_HZ, STEP_PWM_MAX_HZ);
+                U = constrain((U - u_d), STEP_PWM_MIN_HZ, STEP_PWM_MAX_HZ);
+                set_step_pwm(U);
+                set_led_2(false);
+            }
+            // set_led_2(toggler);
         }
-        // set_led_2(toggler);
-        
-       
-       
     }
-    }
-     u_1 = u;
+    u_1 = u;
 
-        e_1 = e;
-        yw_1 = yw;
-     _busy = 0;
-     TIM2->SR &= ~TIM_SR_UIF; // Clean UIF Flag
-    
-
+    e_1 = e;
+    yw_1 = yw;
+    _busy = 0;
+    TIM2->SR &= ~TIM_SR_UIF; // Clean UIF Flag
 }
 
 void init_pid(void)
@@ -174,9 +166,7 @@ void init_pid(void)
 }
 uint16_t pid_2()
 {
-
     position();
-
     // The error is the difference between the reference (setpoint) and the
     // actual position (input)
     int32_t error = setpoint - yw;
@@ -251,7 +241,6 @@ uint16_t pid_2()
 
     return pwm;
 }
-
 
 /// Reset the activity counter to prevent the motor from turning off.
 void resetActivityCounter() { activityCount = 0; }

@@ -102,6 +102,7 @@ void serial_check(void);
 void print_position(void);  
 void print_setpoint(void);
 void print_enc_position(void); 
+void print_real_vref_value(void);
 void diagnostic(void);
 
 void delay_us(uint32_t dlyTicks);

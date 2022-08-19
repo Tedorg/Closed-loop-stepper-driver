@@ -136,6 +136,7 @@ void USART2_IRQHandler()
 
 void usart_rx(void)
 {
+  // printf("in: %d \n", USART2->DR);
   // Handles serial comms reception
   // simply puts the data into the buffer and sets the ComError flag
   // if the buffer is fullup
@@ -144,6 +145,7 @@ void usart_rx(void)
 }
 void usart_tx(void)
 {
+ 
   // Handles serial comms transmission
   // When the transmitter is idle, this is called and the next byte
   // is sent (if there is one)
